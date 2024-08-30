@@ -63,7 +63,7 @@ async def run_tasks_in_batches(tasks, batch_size):
     sheet["A1"] = "Address"
     sheet["B1"] = "Is named"
 
-    for row_index, result in enumerate(results, start=2):
+    for row_index, result in enumerate(res, start=2):
         if isinstance(result, Exception):
             sheet.cell(row=row_index, column=1).value = "Error"
             sheet.cell(row=row_index, column=3).value = str(result)
