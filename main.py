@@ -16,12 +16,7 @@ async def has_name(contract, address) -> bool:
     result = await asyncio.wait_for(contract.functions.redeemed(address).call(), timeout=30)
     return result
 
-async def tmp(address) -> tuple[Any, bool]:
-    module_dir = os.path.dirname(__file__)
-    filename = module_dir + '/proxy.txt'
-    with open(filename, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-
+async def tmp(address, lines) -> tuple[Any, bool]:
     for i in range(10):
         try:
             random_proxy = random.choice(lines).strip()
@@ -52,18 +47,17 @@ async def tmp(address) -> tuple[Any, bool]:
         }
     ]
     contract: Contract = web3.eth.contract(abi=abi, address=contract_address)
-    res = await has_name(contract, address)
+    res = await asyncio.wait_for(has_name(contract, address), timeout=30)
     return address, res
-async def main():
-    module_dir = os.path.dirname(__file__)
-    filename = module_dir + '/public_keys.txt'
-    with open(filename, 'r', encoding='utf-8') as file:
-        public_keys = file.readlines()
-        public_keys = [key.strip() for key in public_keys]
 
-    tasks = [tmp(key) for key in public_keys]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    print(results)
+async def run_tasks_in_batches(tasks, batch_size):
+    res = []
+    for i in range(0, len(tasks), batch_size):
+        batch = tasks[i:i + batch_size]
+
+        results = await asyncio.gather(*batch, return_exceptions=True)
+        print(results)
+        res += results
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet["A1"] = "Address"
@@ -78,6 +72,20 @@ async def main():
             sheet.cell(row=row_index, column=1).value = address
             sheet.cell(row=row_index, column=2).value = 'YES' if is_named else 'NO'
     workbook.save("people.xlsx")
+
+async def main():
+    module_dir = os.path.dirname(__file__)
+    filename = module_dir + '/public_keys.txt'
+    with open(filename, 'r', encoding='utf-8') as file:
+        public_keys = file.readlines()
+        public_keys = [key.strip() for key in public_keys]
+    module_dir = os.path.dirname(__file__)
+    filename = module_dir + '/proxy.txt'
+    with open(filename, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    tasks = [tmp(key, lines) for key in public_keys]
+    await run_tasks_in_batches(tasks, 100)
 
 if __name__ == "__main__":
     asyncio.run(main())
