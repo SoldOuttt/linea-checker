@@ -69,9 +69,14 @@ async def main():
     sheet["A1"] = "Address"
     sheet["B1"] = "Is named"
 
-    for row_index, person in enumerate(results, start=2):
-        sheet.cell(row=row_index, column=1).value = person[0]
-        sheet.cell(row=row_index, column=2).value = 'YES' if person[1] else 'NO'
+    for row_index, result in enumerate(results, start=2):
+        if isinstance(result, Exception):
+            sheet.cell(row=row_index, column=1).value = "Error"
+            sheet.cell(row=row_index, column=3).value = str(result)
+        else:
+            address, is_named = result
+            sheet.cell(row=row_index, column=1).value = address
+            sheet.cell(row=row_index, column=2).value = 'YES' if is_named else 'NO'
     workbook.save("people.xlsx")
 
 if __name__ == "__main__":
