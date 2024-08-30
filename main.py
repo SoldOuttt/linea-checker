@@ -13,7 +13,7 @@ contract_address = '0xDb75Db974B1F2bD3b5916d503036208064D18295'
 
 
 async def has_name(contract, address) -> bool:
-    result = await contract.functions.redeemed(address).call()
+    result = await asyncio.wait_for(contract.functions.redeemed(address).call(), timeout=30)
     return result
 
 async def tmp(address) -> tuple[Any, bool]:
